@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Data Cleaner | Apex Technical Solutions Group</title>
+  <meta name="description" content="Professional data cleaning and standardization service. Clean CSV, Excel, JSON, and CRM exports with advanced features." />
+  <link rel="canonical" href="https://datacleaner.apextsgroup.com/" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    :root {
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+    }
+    .auth-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .auth-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      color: var(--text);
+    }
+    .auth-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .error-message {
+      display: block;
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .auth-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .auth-footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    .mfa-setup {
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .mfa-qr {
+      text-align: center;
+      margin: 16px 0;
+    }
+    .mfa-qr img {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .mfa-code {
+      font-family: monospace;
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-align: center;
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>🧹 Data Cleaner</h1>
+        <p>Professional Data Cleaning Service</p>
+      </div>
+      
+      <!-- Login Form -->
+      <div id="login-section">
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" name="email" required autocomplete="email">
+            <span class="error-message" id="login-email-error"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" name="password" required autocomplete="current-password">
+            <span class="error-message" id="login-password-error"></span>
+          </div>
+          
+          <div class="form-group" id="mfa-code-group" style="display:none;">
+            <label for="mfa-code">MFA Code</label>
+            <input type="text" id="mfa-code" name="mfa_code" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+            <span class="error-message" id="mfa-code-error"></span>
+            <p style="margin-top:8px;font-size:12px;color:var(--muted);">Enter the 6-digit code from your authenticator app</p>
+          </div>
+          
+          <div id="login-error" class="error-message" style="display:none;padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-bottom:16px;"></div>
+          
+          <button type="submit" class="btn btn-primary" id="login-btn">
+            <span id="login-btn-text">Sign In</span>
+            <span id="login-btn-loading" style="display:none;">Signing in...</span>
+          </button>
+        </form>
+        
+        <div class="auth-footer">
+          <p>Don't have an account? <a href="#" onclick="showRegister(); return false;">Register</a></p>
+        </div>
+      </div>
+      
+      <!-- Registration Form -->
+      <div id="register-section" style="display:none;">
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="register-name">Full Name</label>
+            <input type="text" id="register-name" name="name" required autocomplete="name">
+            <span class="error-message" id="register-name-error"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="register-email">Email Address</label>
+            <input type="email" id="register-email" name="email" required autocomplete="email">
+            <span class="error-message" id="register-email-error"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" name="password" required autocomplete="new-password" minlength="8">
+            <span class="error-message" id="register-password-error"></span>
+            <p style="margin-top:4px;font-size:12px;color:var(--muted);">Must be at least 8 characters with uppercase, lowercase, number, and special character</p>
+          </div>
+          
+          <div class="form-group">
+            <label for="register-password-confirm">Confirm Password</label>
+            <input type="password" id="register-password-confirm" name="password_confirm" required autocomplete="new-password">
+            <span class="error-message" id="register-password-confirm-error"></span>
+          </div>
+          
+          <div id="register-error" class="error-message" style="display:none;padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-bottom:16px;"></div>
+          
+          <button type="submit" class="btn btn-primary" id="register-btn">
+            <span id="register-btn-text">Create Account</span>
+            <span id="register-btn-loading" style="display:none;">Creating account...</span>
+          </button>
+        </form>
+        
+        <div class="auth-footer">
+          <p>Already have an account? <a href="#" onclick="showLogin(); return false;">Sign In</a></p>
+        </div>
+      </div>
+      
+      <!-- MFA Setup (shown after registration) -->
+      <div id="mfa-setup-section" style="display:none;">
+        <div class="mfa-setup">
+          <h3 style="margin:0 0 12px;font-size:18px;">🔐 Set Up Multi-Factor Authentication</h3>
+          <p style="margin:0 0 16px;font-size:14px;color:var(--muted);">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+          
+          <div class="mfa-qr" id="mfa-qr-container"></div>
+          
+          <div class="mfa-code" id="mfa-secret-display"></div>
+          
+          <p style="margin:16px 0 8px;font-size:14px;color:var(--muted);">Or enter this code manually:</p>
+          
+          <div class="form-group">
+            <label for="mfa-verify-code">Enter 6-digit code to verify</label>
+            <input type="text" id="mfa-verify-code" name="mfa_verify_code" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+            <span class="error-message" id="mfa-verify-error"></span>
+          </div>
+          
+          <button type="button" class="btn btn-primary" id="mfa-verify-btn" onclick="verifyMFA()">Verify & Complete Setup</button>
+          <button type="button" class="btn" style="margin-top:8px;background:var(--bg);color:var(--text);" onclick="skipMFA()">Skip for Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const API_BASE_URL = 'http://localhost:5001';
+    
+    function showLogin() {
+      document.getElementById('login-section').style.display = 'block';
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('mfa-setup-section').style.display = 'none';
+    }
+    
+    function showRegister() {
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'block';
+      document.getElementById('mfa-setup-section').style.display = 'none';
+    }
+    
+    // Login form handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const mfaCode = document.getElementById('mfa-code').value;
+      
+      const btn = document.getElementById('login-btn');
+      const btnText = document.getElementById('login-btn-text');
+      const btnLoading = document.getElementById('login-btn-loading');
+      const errorDiv = document.getElementById('login-error');
+      
+      btn.disabled = true;
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'inline';
+      errorDiv.style.display = 'none';
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, mfa_code: mfaCode || null })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          if (data.requires_mfa && !mfaCode) {
+            // Show MFA input
+            document.getElementById('mfa-code-group').style.display = 'block';
+            btn.disabled = false;
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+          } else {
+            // Store token and redirect
+            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            window.location.href = '/dashboard/';
+          }
+        } else {
+          errorDiv.textContent = data.error || 'Login failed';
+          errorDiv.style.display = 'block';
+          btn.disabled = false;
+          btnText.style.display = 'inline';
+          btnLoading.style.display = 'none';
+        }
+      } catch (error) {
+        errorDiv.textContent = 'Network error. Please try again.';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+      }
+    });
+    
+    // Registration form handler
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('register-name').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const passwordConfirm = document.getElementById('register-password-confirm').value;
+      
+      // Validate password match
+      if (password !== passwordConfirm) {
+        document.getElementById('register-password-confirm-error').textContent = 'Passwords do not match';
+        return;
+      }
+      
+      // Validate password strength
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(password)) {
+        document.getElementById('register-password-error').textContent = 'Password must contain uppercase, lowercase, number, and special character';
+        return;
+      }
+      
+      const btn = document.getElementById('register-btn');
+      const btnText = document.getElementById('register-btn-text');
+      const btnLoading = document.getElementById('register-btn-loading');
+      const errorDiv = document.getElementById('register-error');
+      
+      btn.disabled = true;
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'inline';
+      errorDiv.style.display = 'none';
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Store registration data temporarily
+          window.pendingRegistration = { email, name, password };
+          // Show MFA setup
+          showMFASetup(data.mfa_secret, data.mfa_qr_url);
+        } else {
+          errorDiv.textContent = data.error || 'Registration failed';
+          errorDiv.style.display = 'block';
+          btn.disabled = false;
+          btnText.style.display = 'inline';
+          btnLoading.style.display = 'none';
+        }
+      } catch (error) {
+        errorDiv.textContent = 'Network error. Please try again.';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+      }
+    });
+    
+    function showMFASetup(secret, qrUrl) {
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('mfa-setup-section').style.display = 'block';
+      document.getElementById('mfa-secret-display').textContent = secret;
+      document.getElementById('mfa-qr-container').innerHTML = `<img src="${qrUrl}" alt="MFA QR Code" style="max-width:200px;">`;
+      window.mfaSecret = secret;
+    }
+    
+    async function verifyMFA() {
+      const code = document.getElementById('mfa-verify-code').value;
+      if (!code || code.length !== 6) {
+        document.getElementById('mfa-verify-error').textContent = 'Please enter a 6-digit code';
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/verify-mfa`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mfa_secret: window.mfaSecret, mfa_code: code })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // MFA verified, complete registration
+          const registerData = window.pendingRegistration || {};
+          const finalResponse = await fetch(`${API_BASE_URL}/api/auth/complete-registration`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              email: registerData.email,
+              name: registerData.name,
+              password: registerData.password,
+              mfa_secret: window.mfaSecret 
+            })
+          });
+          
+          const finalData = await finalResponse.json();
+          if (finalData.success) {
+            localStorage.setItem('auth_token', finalData.token);
+            localStorage.setItem('user', JSON.stringify(finalData.user));
+            window.location.href = '/dashboard/';
+          } else {
+            document.getElementById('mfa-verify-error').textContent = finalData.error || 'Registration failed';
+          }
+        } else {
+          document.getElementById('mfa-verify-error').textContent = data.error || 'Invalid code';
+        }
+      } catch (error) {
+        document.getElementById('mfa-verify-error').textContent = 'Verification failed';
+      }
+    }
+    
+    async function skipMFA() {
+      // Complete registration without MFA (user can enable later)
+      const registerData = window.pendingRegistration || {};
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/complete-registration`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email: registerData.email,
+            name: registerData.name,
+            password: registerData.password,
+            mfa_secret: null 
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = '/dashboard/';
+        } else {
+          alert('Error: ' + (data.error || 'Registration failed'));
+        }
+      } catch (error) {
+        alert('Error completing registration');
+      }
+    }
+    
+    // Check if already logged in
+    if (localStorage.getItem('auth_token')) {
+      window.location.href = '/dashboard/';
+    }
+  </script>
+</body>
+</html>
+
