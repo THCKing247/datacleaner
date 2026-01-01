@@ -2622,6 +2622,12 @@ function displayProcessingSummary(results, resultDiv, button, originalText) {
   button.textContent = fileQueue.length > 0 ? `Clean Data (${fileQueue.length} file${fileQueue.length > 1 ? 's' : ''} queued)` : 'Clean Data (0 files queued)';
 }
 
+// Helper function to generate cleaned filename with "(Cleaned)" suffix
+function getCleanedFilename(originalFilename, extension) {
+  const baseName = originalFilename.replace(/\.[^/.]+$/, '');
+  return `${baseName} (Cleaned).${extension}`;
+}
+
 function buildFileExportSection(data, exportFormats, filename) {
   const outputs = data.outputs || {};
   const columnFiles = data.column_files || {};
@@ -2637,13 +2643,13 @@ function buildFileExportSection(data, exportFormats, filename) {
   // Build available downloads
   const availableDownloads = [];
   if (exportFormats.includes('csv') && outputs.master_cleanse_csv) {
-    availableDownloads.push({type: 'csv', label: '📄 Master CSV', data: outputs.master_cleanse_csv, filename: `${baseFilename}_master_cleaned.csv`, mime: 'text/csv'});
+    availableDownloads.push({type: 'csv', label: '📄 Master CSV', data: outputs.master_cleanse_csv, filename: getCleanedFilename(filename, 'csv'), mime: 'text/csv'});
   }
   if (exportFormats.includes('json') && outputs.master_cleanse_json) {
-    availableDownloads.push({type: 'json', label: '📋 Master JSON', data: outputs.master_cleanse_json, filename: `${baseFilename}_master_cleaned.json`, mime: 'application/json'});
+    availableDownloads.push({type: 'json', label: '📋 Master JSON', data: outputs.master_cleanse_json, filename: getCleanedFilename(filename, 'json'), mime: 'application/json'});
   }
   if (exportFormats.includes('excel') && outputs.master_cleanse_excel) {
-    availableDownloads.push({type: 'excel', label: '📊 Master Excel', data: outputs.master_cleanse_excel, filename: `${baseFilename}_master_cleaned.xlsx`, mime: 'excel'});
+    availableDownloads.push({type: 'excel', label: '📊 Master Excel', data: outputs.master_cleanse_excel, filename: getCleanedFilename(filename, 'xlsx'), mime: 'excel'});
   }
   
   const downloadId = `download-${baseFilename.replace(/[^a-zA-Z0-9]/g, '_')}`;
@@ -2717,11 +2723,13 @@ function displaySingleFileResult(data, resultDiv, exportFormats) {
   
   // Build export buttons based on available outputs and selected formats
   const outputs = data.outputs || {};
-  const exportButtons = buildExportButtons(outputs, data.report.file_type, exportFormats);
+  const originalFilename = data.filename || null;
+  const exportButtons = buildExportButtons(outputs, data.report.file_type, exportFormats, originalFilename);
   
   // Column files section (always show - core feature)
+  const baseFilenameForColumns = originalFilename ? originalFilename.replace(/\.[^/.]+$/, '') : 'cleaned_data';
   const columnFilesSection = data.column_files ? 
-    buildColumnFilesSection(data.column_files, 'cleaned_data') : '';
+    buildColumnFilesSection(data.column_files, baseFilenameForColumns) : '';
   
   resultDiv.innerHTML = `
     <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:16px;margin-bottom:16px;">
@@ -2793,17 +2801,21 @@ function downloadSelectedFiles(downloadId) {
   }, checkboxes.length * 200 + 100);
 }
 
-function buildExportButtons(outputs, originalFileType, exportFormats) {
+function buildExportButtons(outputs, originalFileType, exportFormats, originalFilename = null) {
   // Build available downloads
   const availableDownloads = [];
+  // Use original filename if provided, otherwise use generic name
+  const baseFilename = originalFilename ? originalFilename.replace(/\.[^/.]+$/, '') : 'cleaned_data';
+  const getFilename = (ext) => originalFilename ? getCleanedFilename(originalFilename, ext) : `cleaned_data.${ext}`;
+  
   if (exportFormats.includes('csv') && outputs.master_cleanse_csv) {
-    availableDownloads.push({type: 'csv', label: '📄 CSV', data: outputs.master_cleanse_csv, filename: 'cleaned_data.csv', mime: 'text/csv'});
+    availableDownloads.push({type: 'csv', label: '📄 CSV', data: outputs.master_cleanse_csv, filename: getFilename('csv'), mime: 'text/csv'});
   }
   if (exportFormats.includes('json') && outputs.master_cleanse_json) {
-    availableDownloads.push({type: 'json', label: '📋 JSON', data: outputs.master_cleanse_json, filename: 'cleaned_data.json', mime: 'application/json'});
+    availableDownloads.push({type: 'json', label: '📋 JSON', data: outputs.master_cleanse_json, filename: getFilename('json'), mime: 'application/json'});
   }
   if (exportFormats.includes('excel') && outputs.master_cleanse_excel) {
-    availableDownloads.push({type: 'excel', label: '📊 Excel', data: outputs.master_cleanse_excel, filename: 'cleaned_data.xlsx', mime: 'excel'});
+    availableDownloads.push({type: 'excel', label: '📊 Excel', data: outputs.master_cleanse_excel, filename: getFilename('xlsx'), mime: 'excel'});
   }
   
   const downloadId = 'download-single';
@@ -3024,17 +3036,16 @@ function downloadCSV(content, filename) {
 }
 
 function buildExportDropdownForBatch(outputs, filename) {
-  const baseFilename = filename.replace(/\.[^/.]+$/, '');
   const availableDownloads = [];
   
   if (outputs.master_cleanse_csv) {
-    availableDownloads.push({type: 'csv', label: '📄 CSV', data: outputs.master_cleanse_csv, filename: `${baseFilename}_cleaned.csv`, mime: 'text/csv'});
+    availableDownloads.push({type: 'csv', label: '📄 CSV', data: outputs.master_cleanse_csv, filename: getCleanedFilename(filename, 'csv'), mime: 'text/csv'});
   }
   if (outputs.master_cleanse_json) {
-    availableDownloads.push({type: 'json', label: '📋 JSON', data: outputs.master_cleanse_json, filename: `${baseFilename}_cleaned.json`, mime: 'application/json'});
+    availableDownloads.push({type: 'json', label: '📋 JSON', data: outputs.master_cleanse_json, filename: getCleanedFilename(filename, 'json'), mime: 'application/json'});
   }
   if (outputs.master_cleanse_excel) {
-    availableDownloads.push({type: 'excel', label: '📊 Excel', data: outputs.master_cleanse_excel, filename: `${baseFilename}_cleaned.xlsx`, mime: 'excel'});
+    availableDownloads.push({type: 'excel', label: '📊 Excel', data: outputs.master_cleanse_excel, filename: getCleanedFilename(filename, 'xlsx'), mime: 'excel'});
   }
   
   const downloadId = `batch-${baseFilename.replace(/[^a-zA-Z0-9]/g, '_')}`;
