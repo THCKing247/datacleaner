@@ -50,16 +50,7 @@ except Exception as e:
     raise
 
 app = Flask(__name__)
-# Configure CORS for subdomain
-CORS(app, 
-     supports_credentials=True,
-     origins=[
-         'https://datacleaner.apextsgroup.com',
-         'http://localhost:5001',
-         'http://localhost:3000',
-         'http://127.0.0.1:5001',
-         'http://127.0.0.1:3000'
-     ])
+CORS(app, supports_credentials=True)
 
 # Configuration
 SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(32))
